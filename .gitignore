@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.log
+
+# Node
+node_modules/
+.next/
+dist/
+
+# iOS / Xcode
+xcuserdata/
+DerivedData/
+
+# IDE
+.vscode/
+.idea/
+
+# Секреты
+*.pem
+*.key
+secrets.*

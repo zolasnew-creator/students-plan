@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Students Plan — экосистема для управления академической жизнью студентов. Умный захват, AI-обработка, синхронизация, поиск.">
+    <meta name="theme-color" content="#F5F7F6">
+    <title>Students Plan | 学生计划</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234A6B56'/><text x='50' y='69' font-family='Inter,system-ui,sans-serif' font-size='54' font-weight='800' fill='%23ffffff' text-anchor='middle'>S</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #F5F7F6;
+            --bg-card: #FFFFFF;
+            --text-main: #1E2722;
+            --text-muted: #5C6760;
+            --accent: #4A6B56;
+            --accent-light: #E8EFEA;
+            --cta: #E07A5F;
+            --radius: 24px;
+            --shadow: rgba(40, 50, 45, 0.04);
+            --border: rgba(74, 107, 86, 0.08);
+            --header-h: 73px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        body.menu-locked { overflow: hidden; }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        .skip-link {
+            position: fixed;
+            top: 12px;
+            left: -9999px;
+            z-index: 1000;
+            padding: 12px 20px;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .skip-link:focus { left: 12px; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
+        /* Header */
+        header {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(245, 247, 246, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 100;
+            padding: calc(24px + env(safe-area-inset-top, 0px)) 0 24px;
+            border-bottom: 1px solid var(--border);
+            transition: padding 0.3s ease, background-color 0.3s ease;
+        }
+        header.scrolled {
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 0 14px;
+            background: rgba(245, 247, 246, 0.95);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 700; font-size: 22px; color: var(--text-main); letter-spacing: -0.5px; text-decoration: none; }
+        .header-nav { display: flex; align-items: center; gap: 40px; }
+        .nav-links { display: flex; gap: 28px; }
+        .nav-link { color: var(--text-main); text-decoration: none; font-size: 15px; font-weight: 500; opacity: 0.7; transition: opacity 0.2s ease; }
+        .nav-link:hover { opacity: 1; }
+        .lang-switcher { display: flex; gap: 2px; background: rgba(74, 107, 86, 0.06); padding: 3px; border-radius: 12px; }
+        .lang-btn { padding: 6px 14px; border: none; background: transparent; color: var(--text-main); font-weight: 600; font-size: 13px; cursor: pointer; border-radius: 9px; transition: all 0.2s ease; font-family: inherit; opacity: 0.5; }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { background: var(--bg-card); opacity: 1; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); color: var(--accent); }
+
+        /* Burger (скрыт на десктопе) */
+        .burger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 40px; height: 40px; padding: 0; border: none; background: transparent; cursor: pointer; }
+        .burger span { display: block; width: 22px; height: 2px; background: var(--text-main); border-radius: 2px; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease; }
+        .burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .burger.open span:nth-child(2) { opacity: 0; }
+        .burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* Мобильное меню */
+        .menu-backdrop { position: fixed; inset: 0; background: rgba(30,39,34,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: opacity 0.35s ease, visibility 0.35s ease; z-index: 90; }
+        .menu-backdrop.open { opacity: 1; visibility: visible; }
+        .mobile-menu { position: fixed; top: 0; right: 0; height: 100%; width: min(86vw, 360px); background: var(--bg-card); z-index: 95; transform: translateX(100%); transition: transform 0.42s cubic-bezier(0.16,1,0.3,1); padding: calc(var(--header-h) + 24px + env(safe-area-inset-top, 0px)) 28px calc(40px + env(safe-area-inset-bottom, 0px)); box-shadow: -10px 0 40px rgba(40,50,45,0.12); display: flex; flex-direction: column; }
+        .mobile-menu.open { transform: translateX(0); }
+        .mobile-menu .mm-link { display: block; padding: 18px 0; font-size: 18px; font-weight: 600; color: var(--text-main); text-decoration: none; border-bottom: 1px solid var(--border); opacity: 0.85; transition: opacity 0.2s ease, padding-left 0.2s ease; }
+        .mobile-menu .mm-link:hover { opacity: 1; padding-left: 4px; }
+        .mobile-menu .mm-cta { margin-top: 28px; display: inline-block; text-align: center; padding: 16px 24px; background: var(--cta); color: #fff; text-decoration: none; border-radius: 14px; font-weight: 600; font-size: 16px; box-shadow: 0 6px 24px rgba(224,122,95,0.25); }
+
+        /* Hero */
+        .hero { padding: 220px 0 120px; text-align: center; }
+        .hero-badge { display: inline-block; padding: 8px 20px; background: var(--accent-light); border-radius: 100px; font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 32px; letter-spacing: 0.3px; }
+        .hero h1 { font-size: clamp(46px, 6.5vw, 84px); font-weight: 800; letter-spacing: -2px; margin-bottom: 24px; line-height: 1.1; }
+        .hero-subtitle { font-size: clamp(20px, 2.5vw, 28px); color: var(--accent); margin-bottom: 24px; font-weight: 500; }
+        .hero-description { font-size: 18px; max-width: 660px; margin: 0 auto 48px; color: var(--text-muted); }
+        .cta-button { display: inline-block; padding: 18px 40px; background: var(--cta); color: #FFFFFF; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 6px 24px rgba(224, 122, 95, 0.25); border: none; cursor: pointer; }
+        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(224, 122, 95, 0.35); }
+
+        /* Sections */
+        section { padding: 100px 0; border-top: 1px solid rgba(74, 107, 86, 0.05); scroll-margin-top: 90px; }
+        .section-header { text-align: center; margin-bottom: 64px; }
+        .section-title { font-size: clamp(32px, 4vw, 44px); font-weight: 700; margin-bottom: 16px; letter-spacing: -1px; }
+        .section-subtitle { font-size: 18px; color: var(--text-muted); max-width: 720px; margin: 0 auto; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+        .card {
+            background: var(--bg-card);
+            padding: 40px 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px var(--shadow);
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.35s ease,
+                        border-color 0.35s ease;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(40, 50, 45, 0.07); border-color: rgba(30, 39, 34, 0.16); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(30, 39, 34, 0.035) 0%, transparent 60%); pointer-events: none; }
+        .card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--text-main); transform: scaleX(0); transform-origin: left; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card:hover::after { transform: scaleX(1); }
+
+        .card-num { font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-light); display: inline-block; padding: 3px 10px; border-radius: 6px; margin-bottom: 20px; }
+        .card h3 { font-size: 20px; margin-bottom: 12px; font-weight: 600; }
+        .card p { font-size: 15px; color: var(--text-muted); }
+
+        /* Roadmap & Tech */
+        .roadmap-version { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--cta); background: rgba(224, 122, 95, 0.08); display: inline-block; padding: 3px 10px; border-radius: 6px; margin-bottom: 20px; }
+        .tech-category { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .tech-tag { font-size: 13px; font-weight: 500; background: var(--bg-main); padding: 4px 12px; border-radius: 8px; color: var(--text-main); border: 1px solid rgba(74, 107, 86, 0.05); }
+
+        /* MVP Форма */
+        .mvp-form-container { max-width: 540px; margin: 40px auto 0; background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 40px var(--shadow); }
+        .form-group { display: flex; gap: 12px; }
+        .form-input { flex: 1; padding: 16px 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-main); font-family: inherit; font-size: 15px; color: var(--text-main); outline: none; transition: border-color 0.3s ease, background-color 0.3s ease; min-width: 0; }
+        .form-input:focus { border-color: var(--accent); background: #FFFFFF; }
+        .form-btn { padding: 16px 28px; background: var(--accent); color: #FFFFFF; border: none; border-radius: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; font-family: inherit; font-size: 15px; }
+        .form-btn:hover { background: #395342; }
+        .form-success { display: none; color: var(--accent); font-weight: 600; font-size: 15px; text-align: center; padding: 8px 0; }
+        .form-success.show { display: block; animation: fadeUp 0.5s ease; }
+        .form-note { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 16px; opacity: 0.7; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Reveal */
+        .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .card.reveal { transition: opacity 0.5s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease; }
+
+        /* Footer */
+        footer { background: #19201C; color: #E8EFEA; padding: calc(64px + env(safe-area-inset-bottom, 0px)) 0 64px; text-align: center; font-size: 14px; border-top: 1px solid rgba(255,255,255,0.05); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        footer .footer-author { font-weight: 700; font-size: 17px; color: #FFFFFF; letter-spacing: -0.2px; }
+        footer p { opacity: 0.7; margin-top: 8px; color: var(--accent-light); }
+
+        /* Адаптив */
+        @media (max-width: 900px) {
+            .container { padding: 0 28px; }
+            .hero { padding: 170px 0 90px; }
+            .header-nav { gap: 24px; }
+            .nav-links { gap: 20px; }
+        }
+
+        @media (max-width: 640px) {
+            :root { --header-h: 62px; }
+            .container { padding: 0 20px; }
+            .nav-links { display: none; }
+            .burger { display: flex; }
+            .header-nav { gap: 10px; }
+            .logo { font-size: 18px; }
+            .lang-btn { padding: 9px 12px; font-size: 12px; }
+            .hero { padding: 120px 0 64px; }
+            .hero h1 { letter-spacing: -1px; margin-bottom: 18px; }
+            .hero-description { font-size: 16px; margin-bottom: 32px; }
+            .hero-badge { font-size: 13px; padding: 7px 16px; margin-bottom: 24px; }
+            .cta-button { padding: 16px 32px; font-size: 15px; }
+            section { padding: 60px 0; scroll-margin-top: 70px; }
+            .section-header { margin-bottom: 36px; }
+            .section-subtitle { font-size: 16px; }
+            .grid { gap: 14px; }
+            .card { padding: 28px 22px; }
+            .card h3 { font-size: 19px; }
+            .mvp-form-container { padding: 24px 20px; }
+            .form-group { flex-direction: column; }
+            .form-input, .form-btn { width: 100%; }
+            .form-input { font-size: 16px; }
+            .form-btn { padding: 16px; }
+            footer { padding: calc(48px + env(safe-area-inset-bottom, 0px)) 0 48px; }
+        }
+
+        @media (max-width: 380px) {
+            .hero h1 { font-size: 38px; }
+            .logo { font-size: 16px; }
+            .lang-switcher { padding: 2px; }
+            .lang-btn { padding: 8px 9px; font-size: 11px; }
+            .header-nav { gap: 8px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal, .card.reveal { transition: none; opacity: 1; transform: none; }
+            .card::after { transition: none; }
+            .mobile-menu, .menu-backdrop, .burger span { transition: none; }
+            html { scroll-behavior: auto; }
+            .form-success.show { animation: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#main" class="skip-link" data-i18n="a11y.skip">Перейти к содержимому</a>
+
+    <header id="header">
+        <div class="container header-content">
+            <a href="#" class="logo">Students Plan</a>
+            <div class="header-nav">
+                <nav class="nav-links">
+                    <a href="#philosophy" class="nav-link" data-i18n="nav.philosophy">Философия</a>
+                    <a href="#features" class="nav-link" data-i18n="nav.features">Возможности</a>
+                    <a href="#roadmap" class="nav-link" data-i18n="nav.roadmap">Дорожная карта</a>
+                </nav>
+                <div class="lang-switcher">
+                    <button class="lang-btn active" data-lang="ru" aria-label="Русский">RU</button>
+                    <button class="lang-btn" data-lang="en" aria-label="English">EN</button>
+                    <button class="lang-btn" data-lang="zh" aria-label="中文">中文</button>
+                </div>
+                <button class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="mobileMenu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-backdrop" id="menuBackdrop"></div>
+    <aside class="mobile-menu" id="mobileMenu" aria-hidden="true" inert>
+        <a href="#philosophy" class="mm-link" data-i18n="nav.philosophy">Философия</a>
+        <a href="#features" class="mm-link" data-i18n="nav.features">Возможности</a>
+        <a href="#roadmap" class="mm-link" data-i18n="nav.roadmap">Дорожная карта</a>
+        <a href="#tech" class="mm-link" data-i18n="nav.tech">Технологии</a>
+        <a href="#waitlist" class="mm-cta" data-i18n="hero.cta">Записаться в MVP</a>
+    </aside>
+
+    <main id="main">
+        <section class="hero">
+            <div class="container">
+                <div class="hero-badge reveal" data-i18n="hero.badge">Проект будущего дата-инженера</div>
+                <h1 class="reveal" data-i18n="hero.title">Students Plan</h1>
+                <div class="hero-subtitle reveal" data-i18n="hero.subtitle">学生计划 · Второй мозг студента</div>
+                <p class="hero-description reveal" data-i18n="hero.desc">Экосистема для управления академической жизнью. Снимаем когнитивную нагрузку, чтобы сосредоточиться на главном — учёбе.</p>
+                <a href="#waitlist" class="cta-button reveal" data-i18n="hero.cta">Записаться в MVP</a>
+            </div>
+        </section>
+
+        <section id="philosophy">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="phil.title">Философия проекта</h2>
+                    <p class="section-subtitle reveal" data-i18n="phil.sub">Невидимый помощник, который становится естественным продолжением учебного процесса. Минимализм, ноль стресса, максимум автоматизации рутины.</p>
+                </div>
+                <div class="grid">
+                    <div class="card reveal">
+                        <h3 data-i18n="phil.1.title">Ноль трения</h3>
+                        <p data-i18n="phil.1.desc">Захват материала в один тап — прямо с пары. Никаких сложных меню и лишних шагов.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3 data-i18n="phil.2.title">Данные — фундамент</h3>
+                        <p data-i18n="phil.2.desc">Хорошая архитектура данных важнее красивого интерфейса. Сначала — надёжный ETL, потом — UX.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3 data-i18n="phil.3.title">Учёба без выгорания</h3>
+                        <p data-i18n="phil.3.desc">Снимаем когнитивную нагрузку: AI берёт на себя рутину, студент — смысл.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="feat.title">Возможности</h2>
+                    <p class="section-subtitle reveal" data-i18n="feat.sub">Четыре модуля, которые закрывают весь цикл работы с материалом.</p>
+                </div>
+                <div class="grid">
+                    <div class="card reveal">
+                        <span class="card-num">01</span>
+                        <h3 data-i18n="feat.1.title">Умный захват</h3>
+                        <p data-i18n="feat.1.desc">Бесшовная интеграция с iOS через App Intents. Мгновенная загрузка фото слайдов и PDF-лекций прямо с пары.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-num">02</span>
+                        <h3 data-i18n="feat.2.title">AI-обработка</h3>
+                        <p data-i18n="feat.2.desc">Автоматический OCR, улучшение качества изображений, сортировка по папкам и генерация саммари.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-num">03</span>
+                        <h3 data-i18n="feat.3.title">Синхронизация</h3>
+                        <p data-i18n="feat.3.desc">Единый аккаунт через Apple ID, Google и Email. Данные доступны на iOS и в веб-интерфейсе.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-num">04</span>
+                        <h3 data-i18n="feat.4.title">Умный поиск</h3>
+                        <p data-i18n="feat.4.desc">Полнотекстовый поиск по содержимому всех лекций и материалов. Находи любое слово за секунду.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="road.title">Дорожная карта</h2>
+                    <p class="section-subtitle reveal" data-i18n="road.sub">От MVP до полноценной экосистемы для студентов.</p>
+                </div>
+                <div class="grid">
+                    <div class="card reveal">
+                        <span class="roadmap-version">MVP</span>
+                        <h3 data-i18n="road.1.title">Core & iOS</h3>
+                        <p data-i18n="road.1.desc">Запуск iOS-клиента, базовый OCR, сортировка по папкам, веб-версия для просмотра.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="roadmap-version">V 2.0</span>
+                        <h3 data-i18n="road.2.title">Spaced Repetition</h3>
+                        <p data-i18n="road.2.desc">Алгоритмы интервального повторения (аналог Anki) для подготовки к экзаменам.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="roadmap-version">V 3.0</span>
+                        <h3 data-i18n="road.3.title">Desktop Native</h3>
+                        <p data-i18n="road.3.desc">Нативные приложения для macOS и Windows для работы с учебниками и большими объёмами данных.</p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="roadmap-version">V 4.0</span>
+                        <h3 data-i18n="road.4.title">Community</h3>
+                        <p data-i18n="road.4.desc">Каталог общих учебных материалов и обмен конспектами внутри сообщества вуза.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="tech.title">Технологический стек</h2>
+                    <p class="section-subtitle reveal" data-i18n="tech.sub">Архитектура построена вокруг эффективной работы с данными.</p>
+                </div>
+                <div class="grid">
+                    <div class="card reveal">
+                        <div class="tech-category" data-i18n="tech.frontend">Frontend</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Swift</span>
+                            <span class="tech-tag">SwiftUI</span>
+                            <span class="tech-tag">React.js</span>
+                            <span class="tech-tag">Next.js</span>
+                            <span class="tech-tag">App Intents</span>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="tech-category" data-i18n="tech.backend">Data Engineering</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Python</span>
+                            <span class="tech-tag">PaddleOCR</span>
+                            <span class="tech-tag">OpenCV</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                            <span class="tech-tag">Vector DB</span>
+                            <span class="tech-tag">DeepSeek API</span>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="tech-category" data-i18n="tech.infra">Infrastructure</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">AWS S3</span>
+                            <span class="tech-tag">Docker</span>
+                            <span class="tech-tag">iCloud Drive</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="strategy">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="strat.title">Стратегия разработки</h2>
+                    <p class="section-subtitle reveal" data-i18n="strat.sub">Solo Developer · AI-Augmented Development.</p>
+                </div>
+                <div class="grid">
+                    <div class="card reveal">
+                        <h3 data-i18n="strat.1.title">Data Core — ручная разработка</h3>
+                        <p data-i18n="strat.1.desc">Python и SQL пишутся вручную для глубокого понимания ETL-процессов и архитектуры данных. Это основа профессии дата-инженера.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3 data-i18n="strat.2.title">UI/UX — AI-ассистированная</h3>
+                        <p data-i18n="strat.2.desc">Интерфейс и мобильные фичи генерируются с помощью ИИ-ассистентов для ускорения выхода на рынок без потери качества дизайна.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="waitlist">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title reveal" data-i18n="wl.title">Будь первым в MVP</h2>
+                    <p class="section-subtitle reveal" data-i18n="wl.sub">Оставь email — напишем, когда откроем ранний доступ.</p>
+                </div>
+                <div class="mvp-form-container reveal">
+                    <form id="waitlist-form" novalidate>
+                        <div class="form-group">
+                            <input type="email" class="form-input" required
+                                   autocomplete="email"
+                                   data-i18n-ph="wl.placeholder" placeholder="твой@email.com"
+                                   data-i18n-aria="wl.input.aria" aria-label="Email">
+                            <button type="submit" class="form-btn" data-i18n="wl.btn">Записаться</button>
+                        </div>
+                    </form>
+                    <div class="form-success" role="status" aria-live="polite" data-i18n="wl.success">Готово! Ты в списке. Мы напишем на почту.</div>
+                    <p class="form-note" data-i18n="wl.note">Демо-режим: email сохраняется только в вашем браузере.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-author" data-i18n="footer.author">Дамир Габдуллин · 达明</div>
+            <p data-i18n="footer.status">Статус: Разработка MVP</p>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            ru: {
+                "a11y.skip": "Перейти к содержимому",
+                "nav.philosophy": "Философия", "nav.features": "Возможности", "nav.roadmap": "Дорожная карта", "nav.tech": "Технологии",
+                "hero.badge": "Проект будущего дата-инженера", "hero.title": "Students Plan",
+                "hero.subtitle": "学生计划 · Второй мозг студента",
+                "hero.desc": "Экосистема для управления академической жизнью. Снимаем когнитивную нагрузку, чтобы сосредоточиться на главном — учёбе.",
+                "hero.cta": "Записаться в MVP",
+                "phil.title": "Философия проекта",
+                "phil.sub": "Невидимый помощник, который становится естественным продолжением учебного процесса. Минимализм, ноль стресса, максимум автоматизации рутины.",
+                "phil.1.title": "Ноль трения",
+                "phil.1.desc": "Захват материала в один тап — прямо с пары. Никаких сложных меню и лишних шагов.",
+                "phil.2.title": "Данные — фундамент",
+                "phil.2.desc": "Хорошая архитектура данных важнее красивого интерфейса. Сначала — надёжный ETL, потом — UX.",
+                "phil.3.title": "Учёба без выгорания",
+                "phil.3.desc": "Снимаем когнитивную нагрузку: AI берёт на себя рутину, студент — смысл.",
+                "feat.title": "Возможности", "feat.sub": "Четыре модуля, которые закрывают весь цикл работы с материалом.",
+                "feat.1.title": "Умный захват", "feat.1.desc": "Бесшовная интеграция с iOS через App Intents. Мгновенная загрузка фото слайдов и PDF-лекций прямо с пары.",
+                "feat.2.title": "AI-обработка", "feat.2.desc": "Автоматический OCR, улучшение качества изображений, сортировка по папкам и генерация саммари.",
+                "feat.3.title": "Синхронизация", "feat.3.desc": "Единый аккаунт через Apple ID, Google и Email. Данные доступны на iOS и в веб-интерфейсе.",
+                "feat.4.title": "Умный поиск", "feat.4.desc": "Полнотекстовый поиск по содержимому всех лекций и материалов. Находи любое слово за секунду.",
+                "road.title": "Дорожная карта", "road.sub": "От MVP до полноценной экосистемы для студентов.",
+                "road.1.title": "Core & iOS", "road.1.desc": "Запуск iOS-клиента, базовый OCR, сортировка по папкам, веб-версия для просмотра.",
+                "road.2.title": "Spaced Repetition", "road.2.desc": "Алгоритмы интервального повторения (аналог Anki) для подготовки к экзаменам.",
+                "road.3.title": "Desktop Native", "road.3.desc": "Нативные приложения для macOS и Windows для работы с учебниками и большими объёмами данных.",
+                "road.4.title": "Community", "road.4.desc": "Каталог общих учебных материалов и обмен конспектами внутри сообщества вуза.",
+                "tech.title": "Технологический стек", "tech.sub": "Архитектура построена вокруг эффективной работы с данными.",
+                "tech.frontend": "Frontend", "tech.backend": "Data Engineering", "tech.infra": "Infrastructure",
+                "strat.title": "Стратегия разработки", "strat.sub": "Solo Developer · AI-Augmented Development.",
+                "strat.1.title": "Data Core — ручная разработка", "strat.1.desc": "Python и SQL пишутся вручную для глубокого понимания ETL-процессов и архитектуры данных. Это основа профессии дата-инженера.",
+                "strat.2.title": "UI/UX — AI-ассистированная", "strat.2.desc": "Интерфейс и мобильные фичи генерируются с помощью ИИ-ассистентов для ускорения выхода на рынок без потери качества дизайна.",
+                "wl.title": "Будь первым в MVP", "wl.sub": "Оставь email — напишем, когда откроем ранний доступ.",
+                "wl.placeholder": "твой@email.com", "wl.btn": "Записаться",
+                "wl.success": "Готово! Ты в списке. Мы напишем на почту.",
+                "wl.note": "Демо-режим: email сохраняется только в вашем браузере.",
+                "wl.input.aria": "Email",
+                "footer.author": "Дамир Габдуллин · 达明", "footer.status": "Статус: Разработка MVP"
+            },
+            en: {
+                "a11y.skip": "Skip to content",
+                "nav.philosophy": "Philosophy", "nav.features": "Features", "nav.roadmap": "Roadmap", "nav.tech": "Technology",
+                "hero.badge": "Future Data Engineer's Project", "hero.title": "Students Plan",
+                "hero.subtitle": "学生计划 · Student's Second Brain",
+                "hero.desc": "An ecosystem for academic life management. We remove cognitive load so you can focus on what matters — learning.",
+                "hero.cta": "Join the MVP",
+                "phil.title": "Project Philosophy",
+                "phil.sub": "An invisible assistant that becomes a natural extension of the learning process. Minimalism, zero stress, maximum automation.",
+                "phil.1.title": "Zero friction",
+                "phil.1.desc": "Capture material in one tap — right from class. No complex menus, no extra steps.",
+                "phil.2.title": "Data as foundation",
+                "phil.2.desc": "Good data architecture beats a pretty interface. First a reliable ETL, then the UX.",
+                "phil.3.title": "Study without burnout",
+                "phil.3.desc": "We remove cognitive load: AI handles the routine, the student handles the meaning.",
+                "feat.title": "Features", "feat.sub": "Four modules covering the full lifecycle of working with material.",
+                "feat.1.title": "Smart Capture", "feat.1.desc": "Seamless iOS integration via App Intents. Instant upload of slide photos and PDF lectures straight from class.",
+                "feat.2.title": "AI Processing", "feat.2.desc": "Automatic OCR, image enhancement, folder sorting, and summary generation.",
+                "feat.3.title": "Sync", "feat.3.desc": "Unified account via Apple ID, Google, and Email. Data available on iOS and web.",
+                "feat.4.title": "Intelligent Search", "feat.4.desc": "Full-text search across all lecture content and materials. Find any word in a second.",
+                "road.title": "Roadmap", "road.sub": "From MVP to a complete student ecosystem.",
+                "road.1.title": "Core & iOS", "road.1.desc": "iOS client launch, basic OCR, folder sorting, web viewer.",
+                "road.2.title": "Spaced Repetition", "road.2.desc": "Anki-style spaced repetition algorithms for exam preparation.",
+                "road.3.title": "Desktop Native", "road.3.desc": "Native apps for macOS and Windows for textbooks and large data volumes.",
+                "road.4.title": "Community", "road.4.desc": "Shared materials catalog and note exchange within the university community.",
+                "tech.title": "Tech Stack", "tech.sub": "Architecture built around efficient data processing.",
+                "tech.frontend": "Frontend", "tech.backend": "Data Engineering", "tech.infra": "Infrastructure",
+                "strat.title": "Development Strategy", "strat.sub": "Solo Developer · AI-Augmented Development.",
+                "strat.1.title": "Data Core — hand-coded", "strat.1.desc": "Python and SQL are written manually for deep understanding of ETL processes and data architecture. The foundation of a data engineer.",
+                "strat.2.title": "UI/UX — AI-assisted", "strat.2.desc": "Interface and mobile features generated with AI assistants to accelerate market entry without compromising design quality.",
+                "wl.title": "Be first in the MVP", "wl.sub": "Leave your email — we'll write when early access opens.",
+                "wl.placeholder": "your@email.com", "wl.btn": "Sign up",
+                "wl.success": "Done! You're on the list. We'll email you.",
+                "wl.note": "Demo mode: email is stored only in your browser.",
+                "wl.input.aria": "Email",
+                "footer.author": "Damir Gabdullin · 达明", "footer.status": "Status: MVP Development"
+            },
+            zh: {
+                "a11y.skip": "跳到内容",
+                "nav.philosophy": "理念", "nav.features": "功能", "nav.roadmap": "路线图", "nav.tech": "技术",
+                "hero.badge": "未来数据工程师项目", "hero.title": "Students Plan",
+                "hero.subtitle": "学生计划 · 学生的第二大脑",
+                "hero.desc": "管理学术生活的生态系统。我们减轻认知负担，让您专注于最重要的事 — 学习。",
+                "hero.cta": "加入 MVP",
+                "phil.title": "项目理念",
+                "phil.sub": "隐形助手，成为学习过程的自然延伸。极简设计，零压力，最大程度的自动化。",
+                "phil.1.title": "零摩擦",
+                "phil.1.desc": "一键捕获材料 — 直接来自课堂。没有复杂的菜单，没有多余的步骤。",
+                "phil.2.title": "数据为基础",
+                "phil.2.desc": "好的数据架构比漂亮的界面更重要。先有可靠的 ETL，再谈 UX。",
+                "phil.3.title": "无倦怠学习",
+                "phil.3.desc": "减轻认知负担：AI 处理常规工作，学生专注于意义。",
+                "feat.title": "功能", "feat.sub": "四个模块覆盖处理材料的完整周期。",
+                "feat.1.title": "智能捕获", "feat.1.desc": "通过 App Intents 与 iOS 无缝集成。即时上传幻灯片照片和 PDF 讲座。",
+                "feat.2.title": "AI 处理", "feat.2.desc": "自动 OCR、图像增强、文件夹分类和摘要生成。",
+                "feat.3.title": "同步", "feat.3.desc": "通过 Apple ID、Google 和 Email 统一账户。数据可在 iOS 和 Web 上访问。",
+                "feat.4.title": "智能搜索", "feat.4.desc": "全文搜索所有讲座内容和材料。一秒内找到任何词。",
+                "road.title": "路线图", "road.sub": "从 MVP 到完整的学生生态系统。",
+                "road.1.title": "核心 & iOS", "road.1.desc": "iOS 客户端发布、基础 OCR、文件夹分类、Web 查看器。",
+                "road.2.title": "间隔重复", "road.2.desc": "类似 Anki 的间隔重复算法，用于考试准备。",
+                "road.3.title": "原生桌面", "road.3.desc": "macOS 和 Windows 原生应用，用于教科书和大数据量。",
+                "road.4.title": "社区", "road.4.desc": "共享材料目录和大学社区内的笔记交换。",
+                "tech.title": "技术栈", "tech.sub": "围绕高效数据处理构建的架构。",
+                "tech.frontend": "前端", "tech.backend": "数据工程", "tech.infra": "基础设施",
+                "strat.title": "开发策略", "strat.sub": "独立开发者 · AI 增强开发。",
+                "strat.1.title": "Data Core — 手工编写", "strat.1.desc": "Python 和 SQL 手工编写，深入理解 ETL 流程和数据架构。数据工程师的基础。",
+                "strat.2.title": "UI/UX — AI 辅助", "strat.2.desc": "使用 AI 助手生成界面和移动功能，加快上市速度，不牺牲设计质量。",
+                "wl.title": "抢先体验 MVP", "wl.sub": "留下邮箱 — 开放早期访问时我们会通知您。",
+                "wl.placeholder": "your@email.com", "wl.btn": "登记",
+                "wl.success": "完成！您已在列表中。我们会发邮件通知。",
+                "wl.note": "演示模式：邮箱仅保存在您的浏览器中。",
+                "wl.input.aria": "Email",
+                "footer.author": "达米尔·加布杜林 · 达明", "footer.status": "状态：MVP 开发中"
+            }
+        };
+
+        // --- Элементы ---
+        const LANG_KEY = 'sp_lang';
+        const i18nEls = document.querySelectorAll('[data-i18n]');
+        const phEls = document.querySelectorAll('[data-i18n-ph]');
+        const ariaEls = document.querySelectorAll('[data-i18n-aria]');
+        const langBtns = document.querySelectorAll('.lang-btn');
+
+        function switchLang(lang, animate = true) {
+            if (!translations[lang]) return;
+
+            // Мгновенный отклик на кнопках
+            langBtns.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+            const apply = () => {
+                document.documentElement.lang = lang;
+                i18nEls.forEach(el => {
+                    const val = translations[lang][el.getAttribute('data-i18n')];
+                    if (val !== undefined) el.textContent = val;
+                    // Не трогаем inline opacity у скрытых reveal-элементов
+                    if (!(el.classList.contains('reveal') && !el.classList.contains('active'))) {
+                        el.style.opacity = '';
+                        el.style.transition = '';
+                    }
+                });
+                phEls.forEach(el => {
+                    const val = translations[lang][el.getAttribute('data-i18n-ph')];
+                    if (val !== undefined) el.placeholder = val;
+                });
+                ariaEls.forEach(el => {
+                    const val = translations[lang][el.getAttribute('data-i18n-aria')];
+                    if (val !== undefined) el.setAttribute('aria-label', val);
+                });
+                try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+            };
+
+            if (!animate) { apply(); return; }
+
+            // Плавное затухание только для уже видимых элементов
+            i18nEls.forEach(el => {
+                if (el.classList.contains('reveal') && !el.classList.contains('active')) return;
+                el.style.transition = 'opacity 0.18s ease';
+                el.style.opacity = '0';
+            });
+            setTimeout(apply, 180);
+        }
+
+        langBtns.forEach(b => b.addEventListener('click', () => switchLang(b.dataset.lang)));
+
+        // Первая загрузка — без анимации, чтобы не было «мигания»
+        try {
+            const saved = localStorage.getItem(LANG_KEY);
+            if (saved && saved !== 'ru' && translations[saved]) switchLang(saved, false);
+        } catch (_) {}
+
+        // --- Хедер при скролле ---
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('scrolled', window.scrollY > 40);
+        }, { passive: true });
+
+        // --- Мобильное меню ---
+        const burger = document.getElementById('burger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const backdrop = document.getElementById('menuBackdrop');
+
+        function setMenu(open) {
+            burger.classList.toggle('open', open);
+            mobileMenu.classList.toggle('open', open);
+            backdrop.classList.toggle('open', open);
+            document.body.classList.toggle('menu-locked', open);
+            burger.setAttribute('aria-expanded', String(open));
+            mobileMenu.setAttribute('aria-hidden', String(!open));
+            if ('inert' in HTMLElement.prototype) mobileMenu.inert = !open;
+        }
+        burger.addEventListener('click', () => setMenu(!mobileMenu.classList.contains('open')));
+        backdrop.addEventListener('click', () => setMenu(false));
+        mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+        window.addEventListener('resize', () => { if (window.innerWidth > 640) setMenu(false); });
+
+        // --- Reveal ---
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (!e.isIntersecting) return;
+                const el = e.target;
+                io.unobserve(el);
+                const parent = el.parentElement;
+                let idx = 0;
+                if (parent && parent.classList.contains('grid')) {
+                    const sibs = Array.from(parent.children).filter(c => c.classList.contains('reveal'));
+                    idx = sibs.indexOf(el);
+                }
+                setTimeout(() => el.classList.add('active'), idx * 70);
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+        // --- Магнитный блик ---
+        if (window.matchMedia('(hover: hover)').matches) {
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const r = card.getBoundingClientRect();
+                    card.style.setProperty('--x', ((e.clientX - r.left) / r.width * 100) + '%');
+                    card.style.setProperty('--y', ((e.clientY - r.top) / r.height * 100) + '%');
+                });
+            });
+        }
+
+        // --- Форма ---
+        const form = document.getElementById('waitlist-form');
+        const success = document.querySelector('.form-success');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = form.querySelector('input');
+            if (!input.checkValidity()) { input.reportValidity(); return; }
+            const email = input.value.trim();
+            try {
+                const list = JSON.parse(localStorage.getItem('sp_waitlist') || '[]');
+                if (!list.includes(email)) list.push(email);
+                localStorage.setItem('sp_waitlist', JSON.stringify(list));
+            } catch (_) {}
+            form.style.display = 'none';
+            success.classList.add('show');
+        });
+    </script>
+</body>
+</html>
